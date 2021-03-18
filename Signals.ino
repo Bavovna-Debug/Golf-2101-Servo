@@ -4,6 +4,7 @@
 #include "Signals.h"
 
 volatile unsigned long signalLength = 0lu;
+volatile bool ballAvailableState = false;
 
 void setupTimer()
 {
@@ -51,11 +52,8 @@ ISR(TIMER2_COMPA_vect)
 {
     TCCR2B = TCCR2B;
 
-    skipCycleCounter++;
-    if (skipCycleCounter == 10)
+    if (skipCycleCounter == 1)
     {
-        skipCycleCounter = 0;
-
         if (signalLength > 0)
         {
             PORTB |= (1 << PORTB2);
@@ -63,6 +61,16 @@ ISR(TIMER2_COMPA_vect)
             PORTB &= ~(1 << PORTB2);
         }
     }
+    else if (skipCycleCounter == 2)
+    {
+        ballAvailableState = (analogRead(A0) < 800);
+    }
+    else if (skipCycleCounter == 10)
+    {
+        skipCycleCounter = 0;
+    }
+
+    skipCycleCounter++;
 
     while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB))) { }
 }

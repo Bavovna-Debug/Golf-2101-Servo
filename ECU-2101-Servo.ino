@@ -13,6 +13,7 @@ const int PinDIP7 = 9;
 const int PinServo = 10;
 
 extern volatile unsigned long signalLength;
+extern volatile bool ballAvailableState;
 
 static unsigned int minPWM = 0u;
 static unsigned int maxPWM = 0u;
@@ -22,7 +23,7 @@ static byte intervalAfterMode = 0;
 static bool reverseMode = false;
 
 volatile byte dipMask = 0;
-volatile byte statusByte = 0;
+volatile byte servoStatus = 0;
 
 void setup()
 {
@@ -46,31 +47,31 @@ void setup()
 
 void loop()
 {
-    if (statusByte == SERVO_START)
+    if (servoStatus == SERVO_START)
     {
         readDIP();
         evaluateDIP();
         if (reverseMode == false)
         {
-            statusByte = SERVO_LOAD;
+            servoStatus = SERVO_LOAD;
             turnServo(true);
-            statusByte = SERVO_WAIT;
+            servoStatus = SERVO_WAIT;
             intervalBetween();
-            statusByte = SERVO_TURN;
+            servoStatus = SERVO_TURN;
             turnServo(false);
             intervalAfter();
-            statusByte = SERVO_DONE;
+            servoStatus = SERVO_DONE;
         }
         else
         {
-            statusByte = SERVO_LOAD;
+            servoStatus = SERVO_LOAD;
             turnServo(false);
-            statusByte = SERVO_WAIT;
+            servoStatus = SERVO_WAIT;
             intervalBetween();
-            statusByte = SERVO_TURN;
+            servoStatus = SERVO_TURN;
             turnServo(true);
             intervalAfter();
-            statusByte = SERVO_DONE;
+            servoStatus = SERVO_DONE;
         }
     }
 }
@@ -205,17 +206,24 @@ void receiveEvent(int howMany)
 
         if (commandCode == SERVO_START)
         {
-            statusByte = SERVO_START;
+            servoStatus = SERVO_START;
         }
         else if (commandCode == READ_DIP)
         {
             readDIP();
-            // FIXME: Send
+            Wire.write(dipMask);
         }
     }
 }
 
 void requestEvent()
 {
-    Wire.write(statusByte);
+    byte payload = servoStatus;
+
+    if (ballAvailableState == true)
+    {
+        payload |= BALL_STATE;
+    }
+
+    Wire.write(payload);
 }
