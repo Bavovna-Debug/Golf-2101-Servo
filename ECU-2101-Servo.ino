@@ -12,18 +12,22 @@ const int PinDIP6 = 8;
 const int PinDIP7 = 9;
 const int PinServo = 10;
 
+const unsigned long ServoOffDelay   = 1000lu;
+const unsigned long InitPWMInterval = 2lu;
+const unsigned int InitPWMDelta     = 200;
+
 extern volatile unsigned long signalLength;
 extern volatile bool ballAvailableState;
 
-static unsigned int minPWM = 0u;
-static unsigned int maxPWM = 0u;
-static byte turnMode = 0;
+static unsigned int minPWM      = 0;
+static unsigned int maxPWM      = 0;
+static byte turnMode            = 0;
 static byte intervalBetweenMode = 0;
-static byte intervalAfterMode = 0;
-static bool reverseMode = false;
+static byte intervalAfterMode   = 0;
+static bool reverseMode         = false;
 
-volatile byte dipMask = 0;
-volatile byte servoStatus = 0;
+volatile byte dipMask           = 0;
+volatile byte servoStatus       = 0;
 
 void setup()
 {
@@ -43,6 +47,10 @@ void setup()
     pinMode(PinServo, OUTPUT);
 
     setupTimer();
+
+    readDIP();
+    evaluateDIP();
+    initServo();
 }
 
 void loop()
@@ -123,6 +131,50 @@ void evaluateDIP()
     reverseMode = ((dipMask & 0x80) != 0);
 }
 
+void initServo()
+{
+    if (reverseMode == false)
+    {
+        signalLength = maxPWM;
+        while (signalLength > (maxPWM - InitPWMDelta))
+        {
+            signalLength--;
+            delay(InitPWMInterval);
+        }
+        while (signalLength < maxPWM)
+        {
+            signalLength++;
+            delay(InitPWMInterval);
+        }
+
+        // Wait to make sure servo has enough time to reach the end point.
+        //
+        delay(ServoOffDelay);
+        
+        signalLength = 0lu;
+    }
+    else
+    {
+        signalLength = minPWM;
+        while (signalLength < (minPWM + InitPWMDelta))
+        {
+            signalLength++;
+            delay(InitPWMInterval);
+        }
+        while (signalLength > minPWM)
+        {
+            signalLength--;
+            delay(InitPWMInterval);
+        }
+
+        // Wait to make sure servo has enough time to reach the end point.
+        //
+        delay(ServoOffDelay);
+
+        signalLength = 0lu;
+    }
+}
+
 void turnServo(const bool forwards)
 {
     unsigned long interval;
@@ -142,27 +194,31 @@ void turnServo(const bool forwards)
 
     if (forwards == true)
     {
-        for (signalLength = minPWM; signalLength <= maxPWM; signalLength += 10lu)
+        for (signalLength = minPWM;
+             signalLength < maxPWM;
+             signalLength += 10lu)
         {
             delay(interval);
         }
 
         // Wait to make sure servo has enough time to reach the end point.
         //
-        delay(250);
+        delay(ServoOffDelay);
         
         signalLength = 0lu;
     }
     else
     {
-        for (signalLength = maxPWM; signalLength >= minPWM; signalLength -= 10lu)
+        for (signalLength = maxPWM;
+             signalLength > minPWM;
+             signalLength -= 10lu)
         {
             delay(interval);
         }
 
         // Wait to make sure servo has enough time to reach the end point.
         //
-        delay(500);
+        delay(ServoOffDelay);
 
         signalLength = 0lu;
     }
