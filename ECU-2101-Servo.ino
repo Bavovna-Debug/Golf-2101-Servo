@@ -31,7 +31,7 @@ volatile byte servoStatus       = 0;
 
 void setup()
 {
-    Wire.begin(8);
+    Wire.begin(I2C_ID_SERVO);
     Wire.onReceive(receiveEvent);
     Wire.onRequest(requestEvent);
 
