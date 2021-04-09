@@ -150,7 +150,7 @@ void initServo()
         // Wait to make sure servo has enough time to reach the end point.
         //
         delay(ServoOffDelay);
-        
+
         signalLength = 0lu;
     }
     else
@@ -204,7 +204,7 @@ void turnServo(const bool forwards)
         // Wait to make sure servo has enough time to reach the end point.
         //
         delay(ServoOffDelay);
-        
+
         signalLength = 0lu;
     }
     else
