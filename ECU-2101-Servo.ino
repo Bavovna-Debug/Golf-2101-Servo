@@ -31,7 +31,7 @@ volatile byte servoStatus       = 0;
 
 void setup()
 {
-    Wire.begin(8);
+    Wire.begin(I2C_ID_SERVO);
     Wire.onReceive(receiveEvent);
     Wire.onRequest(requestEvent);
 
@@ -150,7 +150,7 @@ void initServo()
         // Wait to make sure servo has enough time to reach the end point.
         //
         delay(ServoOffDelay);
-        
+
         signalLength = 0lu;
     }
     else
@@ -204,7 +204,7 @@ void turnServo(const bool forwards)
         // Wait to make sure servo has enough time to reach the end point.
         //
         delay(ServoOffDelay);
-        
+
         signalLength = 0lu;
     }
     else
